@@ -392,6 +392,10 @@ func (configgen *ConfigGeneratorImpl) buildInboundClusters(env *model.Environmen
 	// clusters, because there would be no corresponding inbound listeners
 	sidecarScope := proxy.SidecarScope
 	noneMode := proxy.GetInterceptionMode() == model.InterceptionNone
+	localIP := LocalhostAddress
+	if len(proxy.IPAddresses) > 0 {
+		localIP = proxy.IPAddresses[0]
+	}
 
 	if sidecarScope == nil || !sidecarScope.HasCustomIngressListeners {
 		// No user supplied sidecar scope or the user supplied one has no ingress listeners
@@ -410,7 +414,7 @@ func (configgen *ConfigGeneratorImpl) buildInboundClusters(env *model.Environmen
 				ServiceInstance: instance,
 				Port:            instance.Endpoint.ServicePort,
 				Push:            push,
-				Bind:            LocalhostAddress,
+				Bind:            localIP,
 			}
 			localCluster := configgen.buildInboundClusterForPortOrUDS(pluginParams)
 			clusters = append(clusters, localCluster)
