@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: details-price
+  labels:
+    app: details
+    version: price
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: details
+      version: price
+  template:
+    metadata:
+      labels:
+        app: details
+        version: price
+    spec:
+      serviceAccountName: bookinfo-details
+      containers:
+      - name: details
+        image: zhongfox/bookinfo-details:price
+        imagePullPolicy: Always
+        env:
+        - name: USE_POD_IP
+          value: "true"
+        ports:
+        - containerPort: 9080

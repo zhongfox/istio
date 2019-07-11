@@ -25,7 +25,12 @@ end
 
 port = Integer(ARGV[0])
 
-server = WEBrick::HTTPServer.new :BindAddress => '0.0.0.0', :Port => port
+ip = '0.0.0.0'
+if ENV['USE_POD_IP'] === 'true'
+  ip = ENV['INSTANCE_IP']
+end
+
+server = WEBrick::HTTPServer.new :BindAddress => ip, :Port => port
 
 trap 'INT' do server.shutdown end
 
@@ -46,14 +51,36 @@ server.mount_proc '/details' do |req, res|
           raise 'please provide numeric product id'
         end
         details = get_book_details(id, headers)
+        price = get_price(id, headers)
+        details.merge!(price)
+
         res.body = details.to_json
         res['Content-Type'] = 'application/json'
     rescue => error
+        puts error
         res.body = {'error' => error}.to_json
         res['Content-Type'] = 'application/json'
         res.status = 400
     end
 end
+
+server.mount_proc '/price' do |req, res|
+    res.body = {'price': '$9.9'}.to_json
+    res['Content-Type'] = 'application/json'
+end
+
+def get_price(id, headers)
+    uri = URI("http://details:9080/price?id=#{id}")
+    req = Net::HTTP::Get.new(uri)
+    headers.each { |k, v| req[k] = v }
+
+    res = Net::HTTP.start(uri.hostname, uri.port) {|http|
+      http.request(req)
+    }
+    JSON.parse(res.body)
+end
+
+
 
 # TODO: provide details on different books.
 def get_book_details(id, headers)
