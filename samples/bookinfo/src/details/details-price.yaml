@@ -22,8 +22,13 @@ spec:
       - name: details
         image: zhongfox/bookinfo-details:price
         imagePullPolicy: Always
+        ports:
+        - containerPort: 9080
         env:
         - name: USE_POD_IP
           value: "true"
-        ports:
-        - containerPort: 9080
+        - name: INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
